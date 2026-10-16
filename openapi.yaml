@@ -1,53 +1,35 @@
 openapi: 3.1.0
 info:
   title: SkillNic Skills API
-  version: 0.1.0
-  description: API autenticada para armazenar, listar, atualizar e ativar skills reutilizáveis.
+  version: 0.1.1
+  description: API autenticada para armazenar e gerenciar skills por usuário.
 servers:
-  - url: https://YOUR_DEPLOYED_API_HOST
-    description: Substitua pelo host HTTPS após a implantação
+  - url: https://skillnic.onrender.com
 security:
   - bearerAuth: []
 paths:
   /health:
     get:
+      operationId: checkHealth
+      summary: Verificar disponibilidade
       security: []
-      summary: Verifica disponibilidade
       responses:
-        "200":
-          description: API disponível
+        '200': { description: API disponível }
   /v1/skills:
     get:
-      summary: Lista skills do usuário autenticado
+      operationId: listSkills
+      summary: Listar skills do usuário autenticado
       parameters:
-        - in: query
-          name: scope
-          schema: { type: string, enum: [conversation, project, user] }
-        - in: query
-          name: active
-          schema: { type: boolean }
-        - in: query
-          name: project_key
-          schema: { type: string, maxLength: 160 }
-        - in: query
-          name: limit
-          schema: { type: integer, minimum: 1, maximum: 100, default: 50 }
+        - { in: query, name: scope, schema: { type: string, enum: [conversation, project, user] } }
+        - { in: query, name: active, schema: { type: boolean } }
+        - { in: query, name: project_key, schema: { type: string, maxLength: 160 } }
+        - { in: query, name: limit, schema: { type: integer, minimum: 1, maximum: 100, default: 50 } }
       responses:
-        "200":
-          description: Skills encontradas
-          content:
-            application/json:
-              schema:
-                type: object
-                required: [skills, count]
-                properties:
-                  skills:
-                    type: array
-                    items: { $ref: "#/components/schemas/Skill" }
-                  count: { type: integer }
-        "401": { $ref: "#/components/responses/Unauthorized" }
+        '200': { description: Lista de skills }
+        '401': { $ref: '#/components/responses/Unauthorized' }
     post:
-      summary: Registra uma nova skill
+      operationId: createSkill
+      summary: Salvar uma skill
       requestBody:
         required: true
         content:
@@ -56,33 +38,32 @@ paths:
               type: object
               required: [name, content]
               properties:
-                name: { type: string, pattern: "^[a-z0-9][a-z0-9._-]{0,63}$" }
+                name: { type: string, pattern: '^[a-z0-9][a-z0-9._-]{0,63}$' }
                 title: { type: string, maxLength: 120 }
                 description: { type: string, maxLength: 1000 }
                 content: { type: string, minLength: 1, maxLength: 50000 }
                 scope: { type: string, enum: [conversation, project, user], default: user }
-                project_key: { type: [string, "null"], maxLength: 160 }
+                project_key: { type: [string, 'null'], maxLength: 160 }
                 tags: { type: array, items: { type: string }, maxItems: 20 }
                 active: { type: boolean, default: true }
       responses:
-        "201": { description: Skill registrada }
-        "400": { description: Dados inválidos }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "409": { description: Nome já utilizado pelo usuário }
+        '201': { description: Skill salva }
+        '400': { description: Dados inválidos }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '409': { description: Skill já existe }
   /v1/skills/{name}:
     parameters:
-      - in: path
-        name: name
-        required: true
-        schema: { type: string }
+      - { in: path, name: name, required: true, schema: { type: string, pattern: '^[a-z0-9][a-z0-9._-]{0,63}$' } }
     get:
-      summary: Consulta uma skill pelo nome
+      operationId: getSkill
+      summary: Recuperar uma skill
       responses:
-        "200": { description: Skill encontrada }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "404": { $ref: "#/components/responses/NotFound" }
+        '200': { description: Skill encontrada }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
     patch:
-      summary: Atualiza uma skill existente
+      operationId: updateSkill
+      summary: Atualizar uma skill
       requestBody:
         required: true
         content:
@@ -95,28 +76,25 @@ paths:
                 description: { type: string, maxLength: 1000 }
                 content: { type: string, minLength: 1, maxLength: 50000 }
                 scope: { type: string, enum: [conversation, project, user] }
-                project_key: { type: [string, "null"], maxLength: 160 }
+                project_key: { type: [string, 'null'], maxLength: 160 }
                 tags: { type: array, items: { type: string }, maxItems: 20 }
                 is_active: { type: boolean }
       responses:
-        "200": { description: Skill atualizada }
-        "400": { description: Dados inválidos }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "404": { $ref: "#/components/responses/NotFound" }
+        '200': { description: Skill atualizada }
+        '400': { description: Dados inválidos }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
     delete:
-      summary: Exclui uma skill
+      operationId: deleteSkill
+      summary: Excluir uma skill
       responses:
-        "204": { description: Skill excluída }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "404": { $ref: "#/components/responses/NotFound" }
+        '204': { description: Skill excluída }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
   /v1/skills/{name}/activate:
     post:
-      summary: Recupera skill ativa e prepara contexto para a tarefa atual
-      parameters:
-        - in: path
-          name: name
-          required: true
-          schema: { type: string }
+      operationId: activateSkill
+      summary: Recuperar skill ativa e preparar contexto da tarefa
       requestBody:
         required: false
         content:
@@ -126,19 +104,9 @@ paths:
               properties:
                 task: { type: string, maxLength: 10000 }
       responses:
-        "200":
-          description: Skill e contexto preparados
-          content:
-            application/json:
-              schema:
-                type: object
-                required: [skill, context, note]
-                properties:
-                  skill: { $ref: "#/components/schemas/Skill" }
-                  context: { type: string }
-                  note: { type: string }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "404": { $ref: "#/components/responses/NotFound" }
+        '200': { description: Skill e contexto preparados }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
 components:
   securitySchemes:
     bearerAuth:
@@ -148,7 +116,6 @@ components:
   schemas:
     Skill:
       type: object
-      required: [id, name, title, description, content, scope, tags, active, version, created_at, updated_at]
       properties:
         id: { type: string, format: uuid }
         name: { type: string }
@@ -156,14 +123,12 @@ components:
         description: { type: string }
         content: { type: string }
         scope: { type: string, enum: [conversation, project, user] }
-        project_key: { type: [string, "null"] }
+        project_key: { type: [string, 'null'] }
         tags: { type: array, items: { type: string } }
         active: { type: boolean }
         version: { type: integer }
         created_at: { type: string, format: date-time }
         updated_at: { type: string, format: date-time }
   responses:
-    Unauthorized:
-      description: Token ausente, inválido ou expirado
-    NotFound:
-      description: Skill não encontrada ou não acessível
+    Unauthorized: { description: Token de usuário ausente, inválido ou expirado }
+    NotFound: { description: Skill não encontrada ou não acessível }
