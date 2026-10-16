@@ -34,7 +34,8 @@ app.use(express.json({ limit: "64kb" }));
 const origins = CORS_ORIGINS.split(",").map((v) => v.trim()).filter(Boolean);
 app.use(cors({
   origin(origin, callback) {
-    if (!origin || origins.length === 0 || origins.includes(origin)) return callback(null, true);
+    // Server-to-server requests have no Origin header. Browser origins must be explicitly allowlisted.
+    if (!origin || origins.includes(origin)) return callback(null, true);
     return callback(new Error("Origin not allowed by CORS"));
   },
   methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
